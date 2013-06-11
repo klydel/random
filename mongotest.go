@@ -30,10 +30,13 @@ import (
 	"math/rand"
 	"time"
 )
-
+//how many inserts a worker should do
 const Insert_Count = 10
+//how many concurrent workers should insert
 const Async_Count = 15
+//how many map reduce calls
 const MapReduce_Count = 2
+//not used
 const FindOne_Count = 10
 
 var Insert_t = make([]float32, Insert_Count*Async_Count)
