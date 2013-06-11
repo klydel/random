@@ -4,16 +4,20 @@
 // times map reduce to count set names
 //
 // Output: 
-//Doc count: {Facebook 2210473}
-//Doc count: {Instagram 2210473}
-//Doc Count: {Twitter 2210473}
+//Map Reduce Run #: 2
+//#####################
+//Doc count: {CalvinandHobbes 9}
+//Doc count: {Facebook 1530917}
+//Doc count: {Instagram 1530917}
+//Doc count: {Twitter 1530917}
 //Min Insert TIme 0
-//Max Insert Time 1.02038
-//Avg Insert Time 0.00026085915
-//Map Reduce Time 104.97748
-//Query One Time 0
-//Result: {0 Facebook 331870806444823685 9107841974541800341}
-//{MasterConns:167 SlaveConns:-16 SentOps:3000221 ReceivedOps:1500221 ReceivedDocs:1500221 SocketsAlive:151 SocketsInUse:1 SocketRefs:1}
+//Max Insert Time 0.43230098
+//Avg Insert Time 0.06490538
+//Min MapReduce TIme 0
+//Max MapReduce Time 686.86914
+//Avg MapReduce Time 188.86433
+//Query One Time 2.365244
+//{MasterConns:38 SlaveConns:-22 SentOps:3123 ReceivedOps:1622 ReceivedDocs:1622 SocketsAlive:16 SocketsInUse:1 SocketRefs:1}
 
 package main
 
