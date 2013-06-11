@@ -17,7 +17,7 @@
 //Max MapReduce Time 686.86914
 //Avg MapReduce Time 188.86433
 //Query One Time 2.365244
-//Create Index Time 40.45919
+//Create Index Time (Blocking) 40.45919
 //Drop Index Time 0.922316
 //{MasterConns:38 SlaveConns:-22 SentOps:3123 ReceivedOps:1622 ReceivedDocs:1622 SocketsAlive:16 SocketsInUse:1 SocketRefs:1}
 
@@ -30,12 +30,16 @@ import (
 	"math/rand"
 	"time"
 )
+
 //how many inserts a worker should do
 const Insert_Count = 10
+
 //how many concurrent workers should insert
 const Async_Count = 15
+
 //how many map reduce calls
 const MapReduce_Count = 2
+
 //not used
 const FindOne_Count = 10
 
@@ -60,73 +64,75 @@ type Mongostats struct {
 	Avgget    int
 }
 
-// create random int64
+// random creates random int64
 func random() int64 {
 	rand.Seed(time.Now().Unix() + rand.Int63() + 1)
 	return rand.Int63()
 }
 
-// defer starttimer
+// starttimer is a general starttimer
 func starttimer() int64 {
 	return time.Now().UnixNano()
 }
 
-// defer endtimer
+// endtimer is an general endtimer
 func endtimer(startTime int64, i int) {
 	endTime := time.Now().UnixNano()
 	Insert_t = append(Insert_t, float32(endTime-startTime)/1E9)
 }
 
-// defer map reduce timer
+// mrendtimer is a map reduce timer
 func mrendtimer(startTime int64) {
 	endTime := time.Now().UnixNano()
 	Mp_t = append(Mp_t, float32(endTime-startTime)/1E9)
 }
 
-// find one timer
+// foendtimer is findone func timer
 func foendtimer(startTime int64) {
 	endTime := time.Now().UnixNano()
 	Fo_t = float32(endTime-startTime) / 1E9
 }
 
-//index timer
+//iendtimer is a create index timer
 func iendtimer(startTime int64) {
 	endTime := time.Now().UnixNano()
 	Id_t = float32(endTime-startTime) / 1E9
 }
 
-// delete index timer
+// dendtimer is a delete index timer
 func dendtimer(startTime int64) {
 	endTime := time.Now().UnixNano()
 	Di_t = float32(endTime-startTime) / 1E9
 }
 
-// insert one doc
-func insertonedoc(c *mgo.Collection) (err error) {
+// insertonedoc inserts one doc
+func insertonedoc(c *mgo.Collection) error {
 	//defer nmendtimer(starttimer())
-	err = c.Insert(&Mongodoc{123456789, "CalvinandHobbes", 123456789, 123456789})
-	return
+	err := c.Insert(&Mongodoc{123456789, "CalvinandHobbes", 123456789, 123456789})
+	return err
 }
 
-// insert docs into mongo
-func insertdoc(c *mgo.Collection, i int) (err error) {
+// insertdoc inserts docs into mongo, called from insertworker
+func insertdoc(c *mgo.Collection, i int) error {
 	defer endtimer(starttimer(), i)
-	err = c.Insert(&Mongodoc{i, "Facebook", random(), random()}, &Mongodoc{i, "Twitter", random(), random()}, &Mongodoc{i, "Instagram", random(), random()})
-	return
+	err := c.Insert(&Mongodoc{i, "Facebook", random(), random()}, &Mongodoc{i, "Twitter", random(), random()}, &Mongodoc{i, "Instagram", random(), random()})
+	return err
 }
-func findone(c *mgo.Collection) (err error) {
+
+// findone calls an mgo Find for one doc
+func findone(c *mgo.Collection) error {
 	result := Mongodoc{}
 	defer foendtimer(starttimer())
-	err = c.Find(bson.M{"name": "CalvinandHobbes"}).One(&result)
+	err := c.Find(bson.M{"name": "CalvinandHobbes"}).One(&result)
 	if err != nil {
 		fmt.Println("not found")
 		panic(err)
 	}
-	return
+	return err
 }
 
-// count all Monogodoc Name fields
-func testmapreduce(c *mgo.Collection, cm chan int, b int) (err error) {
+// testmapreduce counts all Monogodoc name fields
+func testmapreduce(c *mgo.Collection, cm chan int, b int) error {
 	defer mrendtimer(starttimer())
 	job := &mgo.MapReduce{
 		Map:    "function() { emit(this.name, 1) }",
@@ -136,7 +142,7 @@ func testmapreduce(c *mgo.Collection, cm chan int, b int) (err error) {
 		Id    string "_id"
 		Value int
 	}
-	_, err = c.Find(nil).MapReduce(job, &result)
+	_, err := c.Find(nil).MapReduce(job, &result)
 	if err != nil {
 		return err
 	}
@@ -146,24 +152,23 @@ func testmapreduce(c *mgo.Collection, cm chan int, b int) (err error) {
 		fmt.Printf("Doc count: %v\n", item)
 	}
 	cm <- 1
-	return
+	return err
 }
 
-// with a copy of mongo session, call insert doc for specified insert count
-func insertworker(s *mgo.Session, err error, ch chan int) {
+// insertworker calls func insertdoc for specified insert count 
+func insertworker(s *mgo.Session, ch chan int) {
 	c := s.DB("test").C("mongotest")
 	defer s.Close()
 	for i := 0; i < Insert_Count; i++ {
-		err = insertdoc(c, i)
-		//insertdoc(c, i)
-	}
-	if err != nil {
-		panic(err)
+		err := insertdoc(c, i)
+		if err != nil {
+			panic(err)
+		}
 	}
 	ch <- 1
 }
 
-// create index
+// MakeIndex creates index on given collection
 func MakeIndex(c *mgo.Collection) {
 	defer iendtimer(starttimer())
 	index := mgo.Index{
@@ -179,7 +184,7 @@ func MakeIndex(c *mgo.Collection) {
 	}
 }
 
-// delete index
+// DeleteIndex deletes a collections index
 func DeleteIndex(c *mgo.Collection) {
 	defer dendtimer(starttimer())
 	err := c.DropIndex("name")
@@ -188,40 +193,36 @@ func DeleteIndex(c *mgo.Collection) {
 	}
 }
 
-// find avg insert time
-func AvgFloat(avg []float32) (r float32) {
+// AvgFloat finds avg insert time
+func AvgFloat(avg []float32) float32 {
 	var sum float32
 	for i := 0; i < len(avg); i++ {
 		sum += avg[i]
 	}
-	r = sum / float32(len(avg))
-	return
+	r := sum / float32(len(avg))
+	return r
 }
 
-// find min insert time
-func MinFloat(min []float32) (r float32) {
-	if len(min) > 0 {
-		r = min[0]
-	}
+// MinFloat finds min insert time
+func MinFloat(min []float32) float32 {
+	r := min[0]
 	for i := 1; i < len(min); i++ {
 		if min[i] < r {
 			r = min[i]
 		}
 	}
-	return
+	return r
 }
 
-// find max insert time
-func MaxFloat(max []float32) (r float32) {
-	if len(max) > 0 {
-		r = max[0]
-	}
+// MaxFloat finds max insert time
+func MaxFloat(max []float32) float32 {
+	r := max[0]
 	for i := 1; i < len(max); i++ {
 		if max[i] > r {
 			r = max[i]
 		}
 	}
-	return
+	return r
 }
 
 func main() {
@@ -241,7 +242,7 @@ func main() {
 	for a := 0; a < 10; a++ {
 
 		for j := 0; j < Async_Count; j++ {
-			go insertworker(session.Copy(), err, ch)
+			go insertworker(session.Copy(), ch)
 		}
 		// drain the channel
 		for i := 0; i < Async_Count; i++ {
