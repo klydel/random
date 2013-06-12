@@ -17,8 +17,13 @@
 //Max MapReduce Time 686.86914
 //Avg MapReduce Time 188.86433
 //Query One Time 2.365244
-//Create Index Time (Blocking) 40.45919
-//Drop Index Time 0.922316
+//Min Create Index Time (Blocking) 0
+//Max Create Index Time (Blocking) 212.57533
+//Avg Create Index Time (Blocking) 103.97096
+//Min Drop Index Time 0
+//Max Drop Index Time 0.74884
+//Avg Drop Index Time 0.24233687
+
 //{MasterConns:38 SlaveConns:-22 SentOps:3123 ReceivedOps:1622 ReceivedDocs:1622 SocketsAlive:16 SocketsInUse:1 SocketRefs:1}
 
 package main
@@ -30,12 +35,14 @@ import (
 	"math/rand"
 	"time"
 )
+//how many times to run insert test
+const Test_Runs = 2
 
 //how many inserts a worker should do
 const Insert_Count = 10
 
 //how many concurrent workers should insert
-const Async_Count = 15
+const Async_Count = 20
 
 //how many map reduce calls
 const MapReduce_Count = 2
@@ -43,11 +50,14 @@ const MapReduce_Count = 2
 //not used
 const FindOne_Count = 10
 
+//how many times to create/drop index
+const IndexOp_Count = 4
+
 var Insert_t = make([]float32, Insert_Count*Async_Count)
 var Mp_t = make([]float32, MapReduce_Count)
+var Id_t = make([]float32, IndexOp_Count)
+var Di_t = make([]float32, IndexOp_Count)
 var Fo_t float32
-var Id_t float32
-var Di_t float32
 
 type Mongodoc struct {
 	Uid    int
@@ -96,13 +106,13 @@ func foendtimer(startTime int64) {
 //iendtimer is a create index timer
 func iendtimer(startTime int64) {
 	endTime := time.Now().UnixNano()
-	Id_t = float32(endTime-startTime) / 1E9
+	Id_t = append(Id_t, float32(endTime-startTime) / 1E9)
 }
 
 // dendtimer is a delete index timer
 func dendtimer(startTime int64) {
 	endTime := time.Now().UnixNano()
-	Di_t = float32(endTime-startTime) / 1E9
+	Di_t = append(Di_t, float32(endTime-startTime) / 1E9)
 }
 
 // insertonedoc inserts one doc
@@ -239,7 +249,7 @@ func main() {
 	c := session.DB("test").C("mongotest")
 	insertonedoc(c)
 	ch := make(chan int)
-	for a := 0; a < 10; a++ {
+	for a := 0; a < Test_Runs; a++ {
 
 		for j := 0; j < Async_Count; j++ {
 			go insertworker(session.Copy(), ch)
@@ -258,14 +268,23 @@ func main() {
 	for z := 0; z < MapReduce_Count; z++ {
 		<-cm
 	}
-	MakeIndex(c)
-	DeleteIndex(c)
+	for x := 0; x < IndexOp_Count; x++ {
+		MakeIndex(c)
+		DeleteIndex(c)
+	}
 	minInsert := MinFloat(Insert_t[:])
 	maxInsert := MaxFloat(Insert_t[:])
 	avgInsert := AvgFloat(Insert_t[:])
 	minMap := MinFloat(Mp_t[:])
 	maxMap := MaxFloat(Mp_t[:])
 	avgMap := AvgFloat(Mp_t[:])
+	minIndexC := MinFloat(Id_t[:])
+	maxIndexC := MaxFloat(Id_t[:])
+	avgIndexC := AvgFloat(Id_t[:])
+	minIndexD := MinFloat(Di_t[:])
+	maxIndexD := MaxFloat(Di_t[:])
+	avgIndexD := AvgFloat(Di_t[:])
+
 	fmt.Printf("Min Insert TIme %v\n", minInsert)
 	fmt.Printf("Max Insert Time %v\n", maxInsert)
 	fmt.Printf("Avg Insert Time %v\n", avgInsert)
@@ -273,8 +292,12 @@ func main() {
 	fmt.Printf("Max MapReduce Time %v\n", maxMap)
 	fmt.Printf("Avg MapReduce Time %v\n", avgMap)
 	fmt.Printf("Query One Time %v\n", Fo_t)
-	fmt.Printf("Create Index Time (Blocking) %v\n", Id_t)
-	fmt.Printf("Drop Index Time %v\n", Di_t)
+	fmt.Printf("Min Create Index Time (Blocking) %v\n", minIndexC)
+	fmt.Printf("Max Create Index Time (Blocking) %v\n", maxIndexC)
+	fmt.Printf("Avg Create Index Time (Blocking) %v\n", avgIndexC)
+	fmt.Printf("Min Drop Index Time %v\n", minIndexD)
+	fmt.Printf("Max Drop Index Time %v\n", maxIndexD)
+	fmt.Printf("Avg Drop Index Time %v\n", avgIndexD)
 	fmt.Printf("%+v\n", mgo.GetStats())
 
 }
