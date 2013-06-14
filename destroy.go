@@ -79,7 +79,7 @@ func httpConnectWorker(proxyURLS []string, url *url.URL, cg chan int) {
 func main() {
 	proxyURLS := []string{"http://54.224.82.100:80/","http://64.78.30.180:80/","http://147.31.182.137:80/"}
 	if len(os.Args) != 2 {
-		fmt.Println("Usage: ", os.Args[0], "http://www.offerpop.com/")
+		fmt.Println("Usage: ", os.Args[0], "url")
 		os.Exit(1)
 	}
 
