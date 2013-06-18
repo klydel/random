@@ -45,18 +45,18 @@ const Insert_Count = 10
 const Async_Count = 20
 
 //how many map reduce calls
-const MapReduce_Count = 2
+const MapReduce_Count = 1
 
 //not used
 const FindOne_Count = 10
 
 //how many times to create/drop index
-const IndexOp_Count = 4
+const IndexOp_Count = 1
 
-var Insert_t = make([]float32, Insert_Count*Async_Count)
-var Mp_t = make([]float32, MapReduce_Count)
-var Id_t = make([]float32, IndexOp_Count)
-var Di_t = make([]float32, IndexOp_Count)
+var Insert_t = make([]float32, 0, Insert_Count*Async_Count)
+var Mp_t = make([]float32, 0, MapReduce_Count)
+var Id_t = make([]float32, 0, IndexOp_Count)
+var Di_t = make([]float32, 0, IndexOp_Count)
 var Fo_t float32
 
 type Mongodoc struct {
