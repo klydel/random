@@ -42,8 +42,8 @@ def sorttime2():
     times2.reverse()
 
 
-t1 = timeit.timeit('sorttime1()', setup="from __main__ import sorttime1; gc.enable()", number=100000)
-t2 = timeit.timeit('sorttime2()', setup="from __main__ import sorttime2; gc.enable()", number=100000)
+t1 = timeit.timeit('sorttime1()', setup="from __main__ import sorttime1; gc.enable()", number=1000)
+t2 = timeit.timeit('sorttime2()', setup="from __main__ import sorttime2; gc.enable()", number=1000)
 
 print "sort and reverse", t1
 print "sort then reverse", t2

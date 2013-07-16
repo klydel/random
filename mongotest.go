@@ -249,6 +249,7 @@ func main() {
 	c := session.DB("test").C("mongotest")
 	insertonedoc(c)
 	ch := make(chan int)
+	start := time.Now().UnixNano()
 	for a := 0; a < Test_Runs; a++ {
 
 		for j := 0; j < Async_Count; j++ {
@@ -259,6 +260,7 @@ func main() {
 			<-ch
 		}
 	}
+	end := time.Now().UnixNano()
 	// try to do query as a test
 	findone(c)
 	cm := make(chan int)
@@ -284,14 +286,19 @@ func main() {
 	minIndexD := MinFloat(Di_t[:])
 	maxIndexD := MaxFloat(Di_t[:])
 	avgIndexD := AvgFloat(Di_t[:])
-
+	fmt.Printf("#####################\n")
+	fmt.Printf("%v Docs Inserted in %v seconds, using %v threads\n", Test_Runs * Insert_Count * Async_Count, float32(end-start)/1E9, Async_Count)
 	fmt.Printf("Min Insert TIme %v\n", minInsert)
 	fmt.Printf("Max Insert Time %v\n", maxInsert)
 	fmt.Printf("Avg Insert Time %v\n", avgInsert)
+	fmt.Printf("#####################\n")
+	fmt.Printf("%v MapReduce Runs\n", MapReduce_Count)
 	fmt.Printf("Min MapReduce TIme %v\n", minMap)
 	fmt.Printf("Max MapReduce Time %v\n", maxMap)
 	fmt.Printf("Avg MapReduce Time %v\n", avgMap)
+	fmt.Printf("#####################\n")
 	fmt.Printf("Query One Time %v\n", Fo_t)
+	fmt.Printf("#####################\n")
 	fmt.Printf("Min Create Index Time (Blocking) %v\n", minIndexC)
 	fmt.Printf("Max Create Index Time (Blocking) %v\n", maxIndexC)
 	fmt.Printf("Avg Create Index Time (Blocking) %v\n", avgIndexC)
