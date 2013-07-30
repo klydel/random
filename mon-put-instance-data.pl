@@ -12,12 +12,15 @@
 # on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either 
 # express or implied. See the License for the specific language governing 
 # permissions and limitations under the License.
+# 
+# 2013 - 07 - 29
+# Clyde Lingenfelter - added filehandles metrics push
 
 our $usage = <<USAGE;
 
 Usage: mon-put-instance-data.pl [options]
 
-  Collects memory, swap, and disk space utilization on an Amazon EC2
+  Collects memory, swap, used file handles, and disk space utilization on an Amazon EC2
   instance and sends this data as custom metrics to Amazon CloudWatch.
 
 Description of available options:
@@ -31,6 +34,7 @@ Description of available options:
   --disk-space-util   Reports disk space utilization in percentages.  
   --disk-space-used   Reports allocated disk space in gigabytes.
   --disk-space-avail  Reports available disk space in gigabytes.
+  --used-filehandles  Reports Total used filehandles found in /proc
   
   --aggregated[=only]    Adds aggregated metrics for instance type, AMI id, and overall.
   --auto-scaling[=only]  Adds aggregated metrics for Auto Scaling group.
@@ -104,6 +108,7 @@ my $report_swap_used;
 my $report_disk_util;
 my $report_disk_used;
 my $report_disk_avail;
+my $report_used_filehandles;
 my $mem_used_incl_cache_buff;
 my @mount_path;
 my $mem_units;
@@ -142,6 +147,7 @@ my $argv_size = @ARGV;
     'disk-space-util' => \$report_disk_util,
     'disk-space-used' => \$report_disk_used,
     'disk-space-avail' => \$report_disk_avail,
+    'used-filehandles' => \$report_used_filehandles,
     'auto-scaling:s' => \$auto_scaling,
     'aggregated:s' => \$aggregated,
     'memory-units:s' => \$mem_units,
@@ -280,7 +286,7 @@ if (!$report_disk_space && ($report_disk_util || $report_disk_used || $report_di
 
 # check that there is a need to monitor at least something
 if (!$report_mem_util && !$report_mem_used && !$report_mem_avail
-  && !$report_swap_util && !$report_swap_used && !$report_disk_space)
+  && !$report_swap_util && !$report_swap_used && !$report_disk_space && !$report_used_filehandles)
 {
   exit_with_error("No metrics specified for collection and submission to CloudWatch.");
 }
@@ -446,6 +452,19 @@ if ($report_disk_space)
   }
 }
 
+# Custom Check open files on system
+if ($report_used_filehandles)
+{
+    my $procfile="/proc/sys/fs/file-nr";
+    open(FILE, $procfile) or die "$procfile not exits!";
+    my $line=<FILE>;
+    close FILE;
+    my ($nb_openfiles, $nb_freehandlers, $file_max)= split(/\s/, $line);
+    my $realfreehandlers = $nb_openfiles - $nb_freehandlers;
+    add_metric('UsedFileHandles', 'Count', $realfreehandlers);
+    #add_single_metric($name, $unit, $value, ++$mcount, \%dims);
+}
+
 # send metrics over to CloudWatch if any
 
 if ($mcount > 0)
@@ -568,6 +587,7 @@ sub add_metric
   $xdims{'MountPath'} = $mount if $mount;
   $xdims{'Filesystem'} = $filesystem if $filesystem;
 
+  #$xdims{'UsedFileHandles'} = $name if $name eq 'UsedFileHandles';
   my $auto_scaling_only = defined($auto_scaling) && $auto_scaling == 2;
   my $aggregated_only = defined($aggregated) && $aggregated == 2;
   
