@@ -17,7 +17,6 @@ WARE_MAPPING = {
         'kill' : ['Genieo', 'InstallMac'],
         'files' : ['/private/etc/launchd.conf', '/Applications/Genieo', '/Applications/InstallMac', '/Applications/Uninstall Genieo<', '/Applications/Uninstall IM Completer.app', '~/Library/Application Support/com.genieoinnovation.Installer/', '~/Library/Application Support/Genieo/', '~/Library/LaunchAgents/com.genieo.completer.download.plist', '~/Library/LaunchAgents/com.genieo.completer.update.plist', '/Library/LaunchAgents/com.genieoinnovation.macextension.plist', '/Library/LaunchAgents/com.genieoinnovation.macextension.client.plist', '/Library/LaunchAgents/com.genieo.engine.plist', '/Library/LaunchAgents/com.genieo.completer.update.plist', '/Library/LaunchDaemons/com.genieoinnovation.macextension.client.plist', '/Library/PrivilegedHelperTools/com.genieoinnovation.macextension.client', '/usr/lib/libgenkit.dylib', '/usr/lib/libgenkitsa.dylib', '/usr/lib/libimckit.dylib', '/usr/lib/libimckitsa.dylib', '/Library/Frameworks/GenieoExtra.framework']
     },
-
 }
 
 Test = False
