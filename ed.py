@@ -51,8 +51,11 @@ def remove_files(files):
                 print "removing: ", f
                 os.remove(f)
         else:
-            #be very careful with this
-            os.system("sudo rm -rf %s" % (f,))
+            if Test:
+                print "would have removed: ", f
+            else:
+                print "removing: :, f
+                os.system("sudo rm -rf %s" % (f,))
     
 
 def do_one(malware):
